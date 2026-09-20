@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Domestic Sales Entry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .autocomplete-suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            position: absolute;
+            background-color: #fff;
+            z-index: 9999;
+            width: 100%;
+        }
+
+        .autocomplete-suggestion {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .autocomplete-suggestion:hover {
+            background-color: #e9ecef;
+        }
+
+        #success-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(40, 167, 69, 0.9); /* Light green, Bootstrap's success color with opacity */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            z-index: 99999;
+            font-weight: 500;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+
+        #success-alert.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="/start" class="btn btn-outline-primary">🏠 Home</a>
+        <span class="text-muted" id="today_date"></span>
+    </div>
+
+    <div id="success-alert">✅ Data entered successfully</div>
+
+    <h2 class="mb-4">Domestic Sales Report Entry</h2>
+
+    <form id="domestic-form">
+        <div class="mb-3">
+            <label for="invoice_no" class="form-label">Invoice No</label>
+            <input type="text" class="form-control" id="invoice_no" name="invoice_no" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="invoice_date" class="form-label">Invoice Date</label>
+            <input type="date" class="form-control" id="invoice_date" name="invoice_date" required>
+        </div>
+
+        <div class="mb-3 position-relative">
+            <label for="party_name" class="form-label">Party Name</label>
+            <input type="text" class="form-control" id="party_name" name="party_name" autocomplete="off" required>
+            <div id="party_suggestions" class="autocomplete-suggestions"></div>
+        </div>
+
+        <div class="mb-3">
+            <label for="region_name" class="form-label">Region</label>
+            <select class="form-select" id="region_name" name="region_name" required>
+                {% for region in regions %}
+                <option value="{{ region }}">{{ region }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="product_value" class="form-label">Product Value</label>
+            <input type="number" step="0.01" class="form-control" id="product_value" name="product_value" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const todayFormatted = `${yyyy}-${mm}-${dd}`;
+
+            document.getElementById("today_date").innerText = "Today: " + `${dd}/${mm}/${yyyy}`;
+            document.getElementById("invoice_date").value = todayFormatted;
+
+            const form = document.getElementById('domestic-form');
+            const alertBox = document.getElementById("success-alert");
+            const partyInput = document.getElementById("party_name");
+            const suggestionsBox = document.getElementById("party_suggestions");
+
+            partyInput.addEventListener("input", async () => {
+                const query = partyInput.value;
+                if (query.length < 1) {
+                    suggestionsBox.innerHTML = "";
+                    return;
+                }
+
+                const res = await fetch(`/autocomplete_party?query=${encodeURIComponent(query)}`);
+                const suggestions = await res.json();
+
+                suggestionsBox.innerHTML = "";
+                suggestions.forEach(name => {
+                    const div = document.createElement("div");
+                    div.textContent = name;
+                    div.className = "autocomplete-suggestion";
+                    div.onclick = () => {
+                        partyInput.value = name;
+                        suggestionsBox.innerHTML = "";
+                    };
+                    suggestionsBox.appendChild(div);
+                });
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!suggestionsBox.contains(e.target)) {
+                    suggestionsBox.innerHTML = "";
+                }
+            });
+
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const res = await fetch("/submit_domestic", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (res.ok) {
+                    alertBox.classList.add("show");
+
+                    setTimeout(() => {
+                        alertBox.classList.remove("show");
+                    }, 5000);
+
+                    form.reset();
+                    document.getElementById("invoice_date").value = todayFormatted;
+                } else {
+                    alert("Submission failed.");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

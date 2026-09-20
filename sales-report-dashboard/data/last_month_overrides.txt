@@ -1,0 +1,13 @@
+# Domestic Overrides
+Chennai=9.99
+Bangalore=13.45
+Pune=11.23
+Delhi=15.00
+
+# Export Overrides
+XLNT-EURO=10000
+XLNT-INR=200
+INTL-USD=500.0
+INTL-USD-INR=420.0
+INTL-EUR=700.0
+INTL-EUR-INR=580.0

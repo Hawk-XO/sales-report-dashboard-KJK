@@ -1,0 +1,6 @@
+Chennai=10.00
+Bangalore=12.50
+Mumbai=9.00
+Pune=10.00
+Delhi=10.00
+Hyderabad=10.00
